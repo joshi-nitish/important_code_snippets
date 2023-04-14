@@ -1,5 +1,33 @@
-WITH
-{% include './common_combo.sql' %} -- noqa: disable=all
+WITH warehouses_unique AS (
+  SELECT
+    global_entity_id
+    , warehouse_id
+    , warehouse_name
+  FROM
+    `fulfillment-dwh-production.cl_dmart.warehouses_unique`
+  WHERE is_dmart
+    AND warehouse_id IS NOT NULL
+    AND (global_entity_id LIKE 'PY_%' OR global_entity_id = 'AP_PA')
+
+), table_weekday AS (
+  SELECT weekday
+  FROM UNNEST(GENERATE_ARRAY(1, 7)) AS weekday
+), table_hours AS (
+  SELECT hour
+  FROM UNNEST(GENERATE_ARRAY(0, 23)) AS hour
+), all_combo AS (
+  SELECT *
+  FROM (
+    SELECT global_entity_id
+      , warehouse_id
+      , warehouse_name
+    FROM warehouses_unique
+    GROUP BY 1, 2, 3
+    )
+  FULL JOIN table_weekday ON 1 = 1
+  FULL JOIN table_hours ON 1 = 1
+)
+
 , weekday_country_wh_combo AS (  
     SELECT global_entity_id
       , warehouse_id
